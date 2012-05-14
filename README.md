@@ -22,6 +22,10 @@ sudo make install # installs to /usr/local/bin
 osx-cpu-temp
 ```
 
+### Output example
+
+`61.8°C`
+
 ## Author 
 
 Sébastien Lavoie <sebastien@lavoie.sl>
