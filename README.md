@@ -4,16 +4,21 @@ Outputs current CPU temperature in °C for OSX
 
 ## Usage 
 
-```
+### Compiling
+```bash
 make
+```
+
+### Running
+
+```bash
 ./osx-cpu-temp
 ```
 
 or
 
-```
-make
-sudo make install
+```bash
+sudo make install # installs to /usr/local/bin
 osx-cpu-temp
 ```
 
