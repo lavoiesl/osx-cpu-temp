@@ -23,12 +23,6 @@
 
 #define VERSION               "0.01"
 
-#define OP_NONE               0
-#define OP_LIST               1 
-#define OP_READ               2
-#define OP_READ_FAN           3
-#define OP_WRITE              4
-
 #define KERNEL_INDEX_SMC      2
 
 #define SMC_CMD_READ_BYTES    5
@@ -45,11 +39,7 @@
 #define DATATYPE_SP78         "sp78"
 
 // key values
-#define SMC_KEY_CPU_TEMP      "TC0D"
-#define SMC_KEY_FAN0_RPM_MIN  "F0Mn"
-#define SMC_KEY_FAN1_RPM_MIN  "F1Mn"
-#define SMC_KEY_FAN0_RPM_CUR  "F0Ac"
-#define SMC_KEY_FAN1_RPM_CUR  "F1Ac"
+#define SMC_KEY_CPU_TEMP      "TC0P"
 
 
 typedef struct {
