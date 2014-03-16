@@ -28,7 +28,7 @@ osx-cpu-temp
 61.8°C
 ```
 
-## Author 
+## Maintainer 
 
 Sébastien Lavoie <sebastien@lavoie.sl>
 
