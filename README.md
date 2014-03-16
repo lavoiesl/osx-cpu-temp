@@ -39,6 +39,5 @@ Copyright (C) 2006
 
 ### Inspiration 
 
-eidac smcFanControl
-
-http://www.eidac.de/smcfancontrol/
+ * http://www.eidac.de/smcfancontrol/
+ * https://github.com/hholtmann/smcFanControl/tree/master/smc-command
