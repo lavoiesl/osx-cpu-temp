@@ -35,7 +35,7 @@ Sébastien Lavoie <sebastien@lavoie.sl>
 ### Source 
 
 Apple System Management Control (SMC) Tool 
-Copyright (C) 2006
+Copyright (C) 2006 devnull
 
 ### Inspiration 
 
