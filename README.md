@@ -1,6 +1,6 @@
 # OSX CPU Temp
 
-Outputs current CPU temperature in °C for OSX
+Outputs current CPU temperature for OSX.
 
 ## Usage 
 
@@ -27,6 +27,11 @@ osx-cpu-temp
 ```
 61.8°C
 ```
+
+### Options
+
+ * `-C` Output temperature in Celsius (default).
+ * `-F` Output temperature in Fahrenheit.
 
 ## Maintainer 
 

@@ -170,12 +170,14 @@ double convertToFahrenheit(double celsius) {
 
 int main(int argc, char *argv[])
 {
-    bool fahrenheit = false;
+    char scale = 'C';
+
     int c;
-    while ((c = getopt(argc, argv, "f")) != -1) {
-      switch(c) {
-        case 'f':
-          fahrenheit = true;
+    while ((c = getopt(argc, argv, "CF")) != -1) {
+      switch (c) {
+        case 'F':
+        case 'C':
+          scale = c;
           break;
       }
     }
@@ -184,10 +186,8 @@ int main(int argc, char *argv[])
     double temperature = SMCGetTemperature(SMC_KEY_CPU_TEMP);
     SMCClose();
 
-    char scale = 'C';
-    if (fahrenheit) {
+    if (scale == 'F') {
       temperature = convertToFahrenheit(temperature);
-      scale = 'F';
     }
 
     printf("%0.1f°%c\n", temperature, scale);
