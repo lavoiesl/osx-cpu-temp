@@ -164,11 +164,33 @@ double SMCGetTemperature(char *key)
     return 0.0;
 }
 
+double convertToFahrenheit(double celsius) {
+  return (celsius * (9.0 / 5.0)) + 32.0;
+}
+
 int main(int argc, char *argv[])
 {
+    char scale = 'C';
+
+    int c;
+    while ((c = getopt(argc, argv, "CF")) != -1) {
+      switch (c) {
+        case 'F':
+        case 'C':
+          scale = c;
+          break;
+      }
+    }
+
     SMCOpen();
-    printf("%0.1f°C\n", SMCGetTemperature(SMC_KEY_CPU_TEMP));
+    double temperature = SMCGetTemperature(SMC_KEY_CPU_TEMP);
     SMCClose();
+
+    if (scale == 'F') {
+      temperature = convertToFahrenheit(temperature);
+    }
+
+    printf("%0.1f°%c\n", temperature, scale);
 
     return 0;
 }
