@@ -154,9 +154,9 @@ double SMCGetTemperature(char *key)
         // read succeeded - check returned value
         if (val.dataSize > 0) {
             if (strcmp(val.dataType, DATATYPE_SP78) == 0) {
-                // convert fp78 value to temperature
-                int intValue = (val.bytes[0] * 256 + val.bytes[1]) >> 2;
-                return intValue / 64.0;
+                // convert sp78 value to temperature
+                int intValue = val.bytes[0] * 256 + (unsigned char)val.bytes[1];
+                return intValue / 256.0;
             }
         }
     }
