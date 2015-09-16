@@ -5,6 +5,7 @@ Outputs current CPU temperature for OSX.
 ## Usage 
 
 ### Compiling
+
 ```bash
 make
 ```
@@ -20,6 +21,12 @@ or
 ```bash
 sudo make install # installs to /usr/local/bin
 osx-cpu-temp
+```
+
+### Using clib
+
+```bash
+clib install lavoiesl/osx-cpu-temp
 ```
 
 ### Output example
