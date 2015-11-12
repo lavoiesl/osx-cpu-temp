@@ -40,6 +40,8 @@
 
 // key values
 #define SMC_KEY_CPU_TEMP      "TC0P"
+#define SMC_KEY_GFX_TEMP      "TG0P"
+#define SMC_KEY_FAN_RPM       "F0Ac"
 
 
 typedef struct {
@@ -90,6 +92,7 @@ typedef struct {
 
 // prototypes
 double SMCGetTemperature(char *key);
+unsigned int SMCGetFanRpm(char *key);
 kern_return_t SMCSetFanRpm(char *key, int rpm);
-int SMCGetFanRpm(char *key);
+
 
