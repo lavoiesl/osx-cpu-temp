@@ -249,15 +249,29 @@ void ReadAndPrintFanRPMs(void)
 int main(int argc, char *argv[])
 {
     char scale = 'C';
-    bool do_gpu = true, do_fan_rpm = true;
+    bool do_gpu = false, do_fan_rpm = false;
 
     int c;
-    while ((c = getopt(argc, argv, "CF")) != -1) {
+    while ((c = getopt(argc, argv, "CFgf?")) != -1) {
       switch (c) {
         case 'F':
         case 'C':
           scale = c;
           break;
+        case 'g':
+          do_gpu = true;
+          break;
+        case 'f':
+          do_fan_rpm = true;
+          break;
+        case '?':
+              printf("usage: osx-cpu-temp <options>\n");
+              printf(" options:\n");
+              printf("   -F - Display temperatures in degrees Fahrenheit.\n");
+              printf("   -C - Display temperatures in degrees Celsius.\n");
+              printf("   -g - Also display GPU temperature.\n");
+              printf("   -f - Also display fans.\n");
+              return -1;
       }
     }
 
@@ -267,8 +281,13 @@ int main(int argc, char *argv[])
     if (scale == 'F') {
       temperature = convertToFahrenheit(temperature);
     }
+    
+    char *title = "";
+    if (do_gpu || do_fan_rpm) {
+        title = "CPU: ";
+    }
 
-    printf("CPU: %0.1f°%c\n", temperature, scale);
+    printf("%s%0.1f°%c\n", title, temperature, scale);
     
     if( do_gpu ) {
         double gpu_temp = SMCGetTemperature(SMC_KEY_GFX_TEMP);
