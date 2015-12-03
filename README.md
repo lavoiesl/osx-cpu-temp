@@ -17,7 +17,7 @@ make
 ```
 or
 ```bash
-sh repeat.sh #to repeatedly print the temperature
+sh repeat.sh # to repeatedly print the temperature
 ```
 
 or
