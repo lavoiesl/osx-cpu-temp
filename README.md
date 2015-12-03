@@ -15,6 +15,10 @@ make
 ```bash
 ./osx-cpu-temp
 ```
+or
+```bash
+sh repeat.sh #to repeatedly print the temperature
+```
 
 or
 
