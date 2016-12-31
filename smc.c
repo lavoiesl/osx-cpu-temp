@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <IOKit/IOKitLib.h>
 
 #include "smc.h"
@@ -164,33 +165,145 @@ double SMCGetTemperature(char *key)
     return 0.0;
 }
 
+unsigned int SMCGetFanRPM(char *key)
+{
+    SMCVal_t val;
+    kern_return_t result;
+    
+    result = SMCReadKey(key, &val);
+    if (result == kIOReturnSuccess) {
+        // read succeeded - check returned value
+        if (val.dataSize > 0) {
+            if (strcmp(val.dataType, DATATYPE_FPE2) == 0) {
+                // convert fpe2 value to RPM
+                float value = ntohs(*(UInt16*)val.bytes) / 4.0;
+//                [0] * 256 + (unsigned char)val.bytes[1];
+                return (int)(value);
+            }
+        }
+    }
+    // read failed
+    return 0.0;
+}
+
 double convertToFahrenheit(double celsius) {
   return (celsius * (9.0 / 5.0)) + 32.0;
 }
 
+void ReadAndPrintFanRPMs(void)
+{
+    kern_return_t result;
+    SMCVal_t val;
+    UInt32Char_t key;
+    int totalFans, i;
+    
+    result = SMCReadKey("FNum", &val);
+    
+    if(result == kIOReturnSuccess)
+    {
+        totalFans = _strtoul((char *)val.bytes, val.dataSize, 10);
+        
+        printf("Num fans: %d\n", totalFans);
+        for(i=0; i<totalFans; i++)
+        {
+            printf(" - Fan %d: ", i);
+            sprintf(key, "F%dID", i);
+            SMCReadKey(key, &val);
+            printf("%s", val.bytes+4);
+            sprintf(key, "F%dAc", i);
+            SMCReadKey(key, &val);
+            //printf("    Actual speed : %.0f\n", _strtof(val.bytes, val.dataSize, 2));
+            float actual_speed = (float)(ntohs(*(UInt16*)val.bytes)>>2);
+            sprintf(key, "F%dMn", i);
+            SMCReadKey(key, &val);
+            //printf("    Minimum speed: %.0f\n", strtof(val.bytes, val.dataSize, 2));
+            float minimum_speed =(float)(ntohs(*(UInt16*)val.bytes)>>2);
+            sprintf(key, "F%dMx", i);
+            SMCReadKey(key, &val);
+            //printf("    Maximum speed: %.0f\n", strtof(val.bytes, val.dataSize, 2));
+            float maximum_speed =(float)(ntohs(*(UInt16*)val.bytes)>>2);
+            float rpm = actual_speed - minimum_speed;
+            if (rpm < 0.f) rpm = 0.f;
+            float pct = (rpm)/(maximum_speed-minimum_speed);
+            
+            pct *= 100.f;
+            printf("at %.0f RPM (%.0f%%)\n", rpm, pct );
+            
+            //sprintf(key, "F%dSf", i);
+            //SMCReadKey(key, &val);
+            //printf("    Safe speed   : %.0f\n", strtof(val.bytes, val.dataSize, 2));
+            //sprintf(key, "F%dTg", i);
+            //SMCReadKey(key, &val);
+            //printf("    Target speed : %.0f\n", strtof(val.bytes, val.dataSize, 2));
+            //SMCReadKey("FS! ", &val);
+            //if ((_strtoul((char *)val.bytes, 2, 16) & (1 << i)) == 0)
+            //    printf("    Mode         : auto\n");
+            //else
+            //    printf("    Mode         : forced\n");
+        }
+    }
+    
+    return;
+}
+    
 int main(int argc, char *argv[])
 {
     char scale = 'C';
+    bool do_gpu = false, do_fan_rpm = false;
 
     int c;
-    while ((c = getopt(argc, argv, "CF")) != -1) {
+    while ((c = getopt(argc, argv, "CFgf?")) != -1) {
       switch (c) {
         case 'F':
         case 'C':
           scale = c;
           break;
+        case 'g':
+          do_gpu = true;
+          break;
+        case 'f':
+          do_fan_rpm = true;
+          break;
+        case '?':
+              printf("usage: osx-cpu-temp <options>\n");
+              printf(" options:\n");
+              printf("   -F - Display temperatures in degrees Fahrenheit.\n");
+              printf("   -C - Display temperatures in degrees Celsius.\n");
+              printf("   -g - Also display GPU temperature.\n");
+              printf("   -f - Also display fans.\n");
+              return -1;
       }
     }
 
     SMCOpen();
     double temperature = SMCGetTemperature(SMC_KEY_CPU_TEMP);
-    SMCClose();
 
     if (scale == 'F') {
       temperature = convertToFahrenheit(temperature);
     }
+    
+    char *title = "";
+    if (do_gpu || do_fan_rpm) {
+        title = "CPU: ";
+    }
 
-    printf("%0.1f°%c\n", temperature, scale);
+    printf("%s%0.1f°%c\n", title, temperature, scale);
+    
+    if( do_gpu ) {
+        double gpu_temp = SMCGetTemperature(SMC_KEY_GFX_TEMP);
+        
+        if(scale == 'F') {
+            temperature = convertToFahrenheit(temperature);
+        }
+        
+        printf("GPU: %0.1f°%c\n", gpu_temp, scale);
+    }
+    
+    if( do_fan_rpm) {
+        ReadAndPrintFanRPMs();
+    }
+
+    SMCClose();
 
     return 0;
 }
