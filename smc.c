@@ -164,6 +164,27 @@ double SMCGetTemperature(char *key)
     return 0.0;
 }
 
+double SMCGetFanSpeed(char *key)
+{
+    SMCVal_t val;
+    kern_return_t result;
+
+    result = SMCReadKey(key, &val);
+    if (result == kIOReturnSuccess) {
+        // read succeeded - check returned value
+        if (val.dataSize > 0) {
+	    if (strcmp(val.dataType, DATATYPE_FPE2) == 0) {
+		    // convert fpe2 value to rpm
+		    int intValue = (unsigned char)val.bytes[0] * 256 + (unsigned char)val.bytes[1];
+		    return intValue / 4.0;
+	    }
+        }
+    }
+    // read failed
+    return 0.0;
+}
+
+
 double convertToFahrenheit(double celsius) {
   return (celsius * (9.0 / 5.0)) + 32.0;
 }
@@ -182,15 +203,30 @@ int main(int argc, char *argv[])
       }
     }
 
+    int nfans = 0;
+    double fans[10];
+
     SMCOpen();
     double temperature = SMCGetTemperature(SMC_KEY_CPU_TEMP);
+    for (int i = 0; i < 10; i++) {
+	    char key[5] = SMC_KEY_FAN0_RPM_CUR;
+	    key[1] += i;
+	    double speed = SMCGetFanSpeed(key);
+	    if (speed != 0) {
+		    fans[nfans++] = speed;
+	    }
+    }
     SMCClose();
 
     if (scale == 'F') {
       temperature = convertToFahrenheit(temperature);
     }
 
-    printf("%0.1f°%c\n", temperature, scale);
+    printf("%0.1f°%c", temperature, scale);
+    for (int i = 0; i < nfans; i++) {
+	    printf(" %0.1frpm", fans[i]);
+    }
+    printf("\n");
 
     return 0;
 }
