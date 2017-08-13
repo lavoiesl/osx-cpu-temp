@@ -192,14 +192,18 @@ double convertToFahrenheit(double celsius) {
 int main(int argc, char *argv[])
 {
     char scale = 'C';
+    int fan = 0;
 
     int c;
-    while ((c = getopt(argc, argv, "CF")) != -1) {
+    while ((c = getopt(argc, argv, "CFf")) != -1) {
       switch (c) {
         case 'F':
         case 'C':
           scale = c;
           break;
+        case 'f':
+	  fan = 1;
+	  break;
       }
     }
 
@@ -223,8 +227,10 @@ int main(int argc, char *argv[])
     }
 
     printf("%0.1f°%c", temperature, scale);
-    for (int i = 0; i < nfans; i++) {
+    if (fan) {
+	for (int i = 0; i < nfans; i++) {
 	    printf(" %0.1frpm", fans[i]);
+	}
     }
     printf("\n");
 
