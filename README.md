@@ -42,7 +42,7 @@ clib install lavoiesl/osx-cpu-temp
 
 ## Maintainer 
 
-Sébastien Lavoie <sebastien@lavoie.sl>
+Sébastien Lavoie <github@lavoie.sl>
 
 ### Source 
 
