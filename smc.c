@@ -212,7 +212,8 @@ int main(int argc, char *argv[])
 
     SMCOpen();
     double temperature = SMCGetTemperature(SMC_KEY_CPU_TEMP);
-    for (int i = 0; i < 10; i++) {
+	int i;
+    for (i = 0; i < 10; i++) {
 	    char key[5] = SMC_KEY_FAN0_RPM_CUR;
 	    key[1] += i;
 	    double speed = SMCGetFanSpeed(key);
@@ -228,7 +229,8 @@ int main(int argc, char *argv[])
 
     printf("%0.1f°%c", temperature, scale);
     if (fan) {
-	for (int i = 0; i < nfans; i++) {
+	int i;
+	for (i = 0; i < nfans; i++) {
 	    printf(" %0.1frpm", fans[i]);
 	}
     }
