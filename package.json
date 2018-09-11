@@ -1,6 +1,6 @@
 {
   "name": "osx-cpu-temp",
-  "version": "0.0.0",
+  "version": "1.1.0",
   "repo": "lavoiesl/osx-cpu-temp",
   "description": "Outputs current CPU temperature in °C for OSX",
   "keywords": ["osx", "cpu", "temperature", "sensors"],
