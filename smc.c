@@ -195,7 +195,7 @@ void readAndPrintCpuTemp(int show_title, char scale)
     if (show_title) {
         title = "CPU: ";
     }
-    printf("%s%0.1f°%c\n", title, temperature, scale);
+    printf("%s%0.1f °%c\n", title, temperature, scale);
 }
 
 // Requires SMCOpen()
@@ -210,7 +210,7 @@ void readAndPrintGpuTemp(int show_title, char scale)
     if (show_title) {
         title = "GPU: ";
     }
-    printf("%s%0.1f°%c\n", title, temperature, scale);
+    printf("%s%0.1f °%c\n", title, temperature, scale);
 }
 
 float SMCGetFanRPM(char* key)
