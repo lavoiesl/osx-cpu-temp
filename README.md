@@ -32,7 +32,7 @@ clib install lavoiesl/osx-cpu-temp
 ### Output example
 
 ```
-61.8°C
+61.8 °C
 ```
 
 ### Options
