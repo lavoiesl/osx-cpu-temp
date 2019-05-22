@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if [ ! -f ".clang-format" ]; then
     echo ".clang-format file not found!"
@@ -8,9 +8,12 @@ fi
 changed=0
 
 for file in $(find . -name '*.c' -o -name '*.h'); do
-    formatted="$(clang-format -style=file "${file}")"
-    if ! echo "${formatted}" | cmp - "${file}" >/dev/null; then
-        echo "${formatted}" > "${file}"
+    tmp="$(mktemp)"
+    clang-format -style=file "${file}" > "${tmp}"
+    if cmp "${tmp}" "${file}" >/dev/null; then
+        rm "${tmp}"
+    else
+        mv "${tmp}" "${file}"
         echo "Formatted ${file}"
         changed=1
     fi
