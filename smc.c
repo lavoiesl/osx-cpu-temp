@@ -222,6 +222,10 @@ float SMCGetFanRPM(char* key)
     if (result == kIOReturnSuccess) {
         // read succeeded - check returned value
         if (val.dataSize > 0) {
+            if (strcmp(val.dataType, DATATYPE_FLT) == 0) {
+                return *((float*)val.bytes);
+            }
+
             if (strcmp(val.dataType, DATATYPE_FPE2) == 0) {
                 // convert fpe2 value to RPM
                 return ntohs(*(UInt16*)val.bytes) / 4.0;
@@ -279,7 +283,7 @@ void readAndPrintFanRPMs(void)
             float pct = rpm / (maximum_speed - minimum_speed);
 
             pct *= 100.f;
-            printf("Fan %d - %s at %.0f RPM (%.0f%%)\n", i, name, rpm, pct);
+            printf("Fan %d - %s at %.0f RPM (%.0f%%)\n", i, name, actual_speed, 100*actual_speed/maximum_speed);
 
             //sprintf(key, "F%dSf", i);
             //SMCReadKey(key, &val);
