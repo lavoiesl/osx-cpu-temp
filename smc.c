@@ -143,7 +143,7 @@ UInt32 SMCReadIndexCount(void)
     SMCVal_t val;
 
     SMCReadKey("#KEY", &val);
-    return _strtoul((char *)val.bytes, val.dataSize, 10);
+    return _strtoul((char*)val.bytes, val.dataSize, 10);
 }
 
 double SMCNormalizeFloat(SMCVal_t val)
@@ -166,7 +166,7 @@ double SMCNormalizeFloat(SMCVal_t val)
 int SMCNormalizeInt(SMCVal_t val)
 {
     if (strcmp(val.dataType, DATATYPE_UINT8) == 0 || strcmp(val.dataType, DATATYPE_UINT16) == 0 || strcmp(val.dataType, DATATYPE_UINT32) == 0) {
-        return (int) _strtoul((char *)val.bytes, val.dataSize, 10);
+        return (int)_strtoul((char*)val.bytes, val.dataSize, 10);
     }
     if (strcmp(val.dataType, DATATYPE_SI16) == 0) {
         return ntohs(*(SInt16*)val.bytes);
@@ -176,9 +176,9 @@ int SMCNormalizeInt(SMCVal_t val)
         printf("Hex value = 0x");
         int i;
         for (i = 0; i < val.dataSize; i++)
-          printf("%02x ", (unsigned char) val.bytes[i]);
+            printf("%02x ", (unsigned char)val.bytes[i]);
         printf("\n");
-        return (int) _strtoul((char *)val.bytes, val.dataSize, 10);
+        return (int)_strtoul((char*)val.bytes, val.dataSize, 10);
     }
     return -1;
 }
@@ -191,7 +191,7 @@ char* SMCNormalizeText(SMCVal_t val)
         for (i = 0; i < val.dataSize; i++) {
             result[i] = (unsigned char)val.bytes[i];
         }
-        result[i+1] = 0;
+        result[i + 1] = 0;
         return strdup(result);
     }
 
@@ -213,18 +213,17 @@ char* SMCNormalizeText(SMCVal_t val)
 kern_return_t SMCPrintAll(void)
 {
     kern_return_t result;
-    SMCKeyData_t  inputStructure;
-    SMCKeyData_t  outputStructure;
+    SMCKeyData_t inputStructure;
+    SMCKeyData_t outputStructure;
 
-    int           totalKeys, i;
-    UInt32Char_t  key;
-    SMCVal_t      val;
+    int totalKeys, i;
+    UInt32Char_t key;
+    SMCVal_t val;
 
     totalKeys = SMCReadIndexCount();
     printf("Total keys = %d\n", totalKeys);
 
-    for (i = 0; i < totalKeys; i++)
-    {
+    for (i = 0; i < totalKeys; i++) {
         memset(&inputStructure, 0, sizeof(SMCKeyData_t));
         memset(&outputStructure, 0, sizeof(SMCKeyData_t));
         memset(&val, 0, sizeof(SMCVal_t));
@@ -238,9 +237,9 @@ kern_return_t SMCPrintAll(void)
 
         _ultostr(key, outputStructure.key);
 
-		SMCReadKey(key, &val);
-		char* txt = SMCNormalizeText(val);
-		printf("key = %s type = %s value = %s\n", key, val.dataType, txt);
+        SMCReadKey(key, &val);
+        char* txt = SMCNormalizeText(val);
+        printf("key = %s type = %s value = %s\n", key, val.dataType, txt);
     }
 
     return kIOReturnSuccess;
