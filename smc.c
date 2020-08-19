@@ -521,14 +521,14 @@ int main(int argc, char* argv[])
         case '?':
             printf("usage: osx-cpu-temp <options>\n");
             printf("Options:\n");
-            printf("  -F     Display temperatures in degrees Fahrenheit.\n");
-            printf("  -C     Display temperatures in degrees Celsius (Default).\n");
-            printf("  -c     Display CPU temperature (Default).\n");
-            printf("  -g     Display GPU temperature.\n");
-            printf("  -f     Display fan speeds.\n");
-            printf("  -t key Display temperature of given SMC key");
-            printf("  -r key Display raw value of given SMC key");
-            printf("  -h     Display this help.\n");
+            printf("  -F       Display temperatures in degrees Fahrenheit.\n");
+            printf("  -C       Display temperatures in degrees Celsius (Default).\n");
+            printf("  -c [key] Display CPU temperature [of given key] (Default).\n");
+            printf("  -g [key] Display GPU temperature [of given key].\n");
+            printf("  -f       Display fan speeds.\n");
+            printf("  -t key   Display temperature of given SMC key");
+            printf("  -r key   Display raw value of given SMC key");
+            printf("  -h       Display this help.\n");
             printf("\nIf more than one of -c, -f, or -g are specified, titles will be added\n");
             return -1;
         }
