@@ -140,9 +140,13 @@ kern_return_t SMCReadKey(UInt32Char_t key, SMCVal_t* val)
 
 UInt32 SMCReadIndexCount(void)
 {
+    kern_return_t result;
     SMCVal_t val;
 
-    SMCReadKey("#KEY", &val);
+    result = SMCReadKey("#KEY", &val);
+    if (result != kIOReturnSuccess) {
+        return 0;
+    }
     return _strtoul((char*)val.bytes, val.dataSize, 10);
 }
 
@@ -245,7 +249,7 @@ kern_return_t SMCPrintAll(void)
     return kIOReturnSuccess;
 }
 
-double SMCGetTemperature(char* key)
+double SMCGetDouble(char* key)
 {
     SMCVal_t val;
     kern_return_t result;
@@ -259,54 +263,6 @@ double SMCGetTemperature(char* key)
     }
     // read failed
     return -1.0;
-}
-
-double SMCGetFanSpeed(char* key)
-{
-    SMCVal_t val;
-    kern_return_t result;
-
-    result = SMCReadKey(key, &val);
-    if (result == kIOReturnSuccess) {
-        // read succeeded - check returned value
-        if (val.dataSize > 0) {
-            return SMCNormalizeFloat(val);
-        }
-    }
-    // read failed
-    return -1.0;
-}
-
-float SMCGetFanRPM(char* key)
-{
-    SMCVal_t val;
-    kern_return_t result;
-
-    result = SMCReadKey(key, &val);
-    if (result == kIOReturnSuccess) {
-        // read succeeded - check returned value
-        if (val.dataSize > 0) {
-            return SMCNormalizeFloat(val);
-        }
-    }
-    // read failed
-    return -1.f;
-}
-
-double SMCGetPower(char* key)
-{
-    SMCVal_t val;
-    kern_return_t result;
-
-    result = SMCReadKey(key, &val);
-    if (result == kIOReturnSuccess) {
-        // read succeeded - check returned value
-        if (val.dataSize > 0) {
-            return SMCNormalizeFloat(val);
-        }
-    }
-    // read failed
-    return -1.f;
 }
 
 double convertToFahrenheit(double celsius)
@@ -317,7 +273,7 @@ double convertToFahrenheit(double celsius)
 // Requires SMCOpen()
 void readAndPrintCpuTemp(char* key, int show_title, char scale)
 {
-    double temperature = SMCGetTemperature(key);
+    double temperature = SMCGetDouble(key);
     if (scale == 'F') {
         temperature = convertToFahrenheit(temperature);
     }
@@ -332,7 +288,7 @@ void readAndPrintCpuTemp(char* key, int show_title, char scale)
 // Requires SMCOpen()
 void readAndPrintGpuTemp(char* key, int show_title, char scale)
 {
-    double temperature = SMCGetTemperature(key);
+    double temperature = SMCGetDouble(key);
     if (scale == 'F') {
         temperature = convertToFahrenheit(temperature);
     }
@@ -347,7 +303,7 @@ void readAndPrintGpuTemp(char* key, int show_title, char scale)
 // Requires SMCOpen()
 void readAndPrintTemp(char* key, char scale)
 {
-    double temperature = SMCGetTemperature(key);
+    double temperature = SMCGetDouble(key);
     if (scale == 'F') {
         temperature = convertToFahrenheit(temperature);
     }
@@ -359,7 +315,7 @@ void readAndPrintRawValue(char* key)
 {
     SMCVal_t val;
     kern_return_t result;
-    float f;
+    double f;
     int i;
     char* c;
 
@@ -409,28 +365,28 @@ void readAndPrintFanRPMs(void)
             char* name = val.bytes + 4;
 
             sprintf(key, "F%dAc", i);
-            float actual_speed = SMCGetFanRPM(key);
+            double actual_speed = SMCGetDouble(key);
             if (actual_speed < 0.f) {
                 continue;
             }
 
             sprintf(key, "F%dMn", i);
-            float minimum_speed = SMCGetFanRPM(key);
+            double minimum_speed = SMCGetDouble(key);
             if (minimum_speed < 0.f) {
                 continue;
             }
 
             sprintf(key, "F%dMx", i);
-            float maximum_speed = SMCGetFanRPM(key);
+            double maximum_speed = SMCGetDouble(key);
             if (maximum_speed < 0.f) {
                 continue;
             }
 
-            float rpm = actual_speed - minimum_speed;
+            double rpm = actual_speed - minimum_speed;
             if (rpm < 0.f) {
                 rpm = 0.f;
             }
-            float pct = rpm / (maximum_speed - minimum_speed);
+            double pct = rpm / (maximum_speed - minimum_speed);
 
             pct *= 100.f;
             printf("Fan %d - %s at %.0f RPM (%.0f%%)\n", i, name, rpm, pct);
