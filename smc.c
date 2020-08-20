@@ -241,7 +241,10 @@ kern_return_t SMCPrintAll(void)
 
         _ultostr(key, outputStructure.key);
 
-        SMCReadKey(key, &val);
+        result = SMCReadKey(key, &val);
+        if (result != kIOReturnSuccess)
+            continue;
+
         char* txt = SMCNormalizeText(val);
         printf("key = %s type = %s value = %s\n", key, val.dataType, txt);
     }
