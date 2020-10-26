@@ -184,7 +184,7 @@ double convertToFahrenheit(double celsius)
 }
 
 // Requires SMCOpen()
-void readAndPrintCpuTemp(int show_title, char scale)
+void readAndPrintCpuTemp(int show_title, char scale, int show_units)
 {
     double temperature = SMCGetTemperature(SMC_KEY_CPU_TEMP);
     if (scale == 'F') {
@@ -195,11 +195,17 @@ void readAndPrintCpuTemp(int show_title, char scale)
     if (show_title) {
         title = "CPU: ";
     }
-    printf("%s%0.1f °%c\n", title, temperature, scale);
+
+    if (show_units) {
+		printf("%s%0.1f °%c\n", title, temperature, scale);
+	} else {
+		printf("%s%0.1f\n", title, temperature);
+	}
+
 }
 
 // Requires SMCOpen()
-void readAndPrintGpuTemp(int show_title, char scale)
+void readAndPrintGpuTemp(int show_title, char scale, int show_units)
 {
     double temperature = SMCGetTemperature(SMC_KEY_GPU_TEMP);
     if (scale == 'F') {
@@ -210,7 +216,13 @@ void readAndPrintGpuTemp(int show_title, char scale)
     if (show_title) {
         title = "GPU: ";
     }
-    printf("%s%0.1f °%c\n", title, temperature, scale);
+
+    if (show_units) {
+		printf("%s%0.1f °%c\n", title, temperature, scale);
+	} else {
+		printf("%s%0.1f\n", title, temperature);
+	}
+
 }
 
 float SMCGetFanRPM(char* key)
@@ -302,9 +314,10 @@ int main(int argc, char* argv[])
     int cpu = 0;
     int fan = 0;
     int gpu = 0;
+    int showUnits = 1;
 
     int c;
-    while ((c = getopt(argc, argv, "CFcfgh?")) != -1) {
+    while ((c = getopt(argc, argv, "CFcfguh?")) != -1) {
         switch (c) {
         case 'F':
         case 'C':
@@ -319,6 +332,9 @@ int main(int argc, char* argv[])
         case 'g':
             gpu = 1;
             break;
+		case 'u':
+            showUnits = 0;
+            break;
         case 'h':
         case '?':
             printf("usage: osx-cpu-temp <options>\n");
@@ -328,6 +344,7 @@ int main(int argc, char* argv[])
             printf("  -c  Display CPU temperature (Default).\n");
             printf("  -g  Display GPU temperature.\n");
             printf("  -f  Display fan speeds.\n");
+            printf("  -u  Do not display units for temperatures\n");
             printf("  -h  Display this help.\n");
             printf("\nIf more than one of -c, -f, or -g are specified, titles will be added\n");
             return -1;
@@ -343,10 +360,10 @@ int main(int argc, char* argv[])
     SMCOpen();
 
     if (cpu) {
-        readAndPrintCpuTemp(show_title, scale);
+        readAndPrintCpuTemp(show_title, scale, showUnits);
     }
     if (gpu) {
-        readAndPrintGpuTemp(show_title, scale);
+        readAndPrintGpuTemp(show_title, scale, showUnits);
     }
     if (fan) {
         readAndPrintFanRPMs();
