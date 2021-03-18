@@ -19,7 +19,6 @@
 
 #ifndef __SMC_H__
 #define __SMC_H__
-#endif
 
 #define VERSION "0.01"
 
@@ -92,3 +91,5 @@ typedef struct {
 double SMCGetTemperature(char* key);
 kern_return_t SMCSetFanRpm(char* key, int rpm);
 int SMCGetFanRpm(char* key);
+
+#endif
