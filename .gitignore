@@ -1,1 +1,4 @@
 osx-cpu-temp
+*.o
+*.out
+.DS_Store

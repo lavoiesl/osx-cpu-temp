@@ -40,8 +40,9 @@
 
 // key values
 #define SMC_KEY_CPU_TEMP "TC0P"
-#define SMC_KEY_GPU_TEMP "TG0P"
+#define SMC_KEY_GPU_TEMP "TGCG"
 #define SMC_KEY_FAN0_RPM_CUR "F0Ac"
+#define SMC_KEY_AMBIENT_TEMP "TA0V"
 
 typedef struct {
     char major;

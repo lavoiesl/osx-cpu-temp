@@ -296,62 +296,17 @@ void readAndPrintFanRPMs(void)
     }
 }
 
-int main(int argc, char* argv[])
+// Requires SMCOpen()
+void readAndPrintAmbientTemp(int show_title, char scale)
 {
-    char scale = 'C';
-    int cpu = 0;
-    int fan = 0;
-    int gpu = 0;
-
-    int c;
-    while ((c = getopt(argc, argv, "CFcfgh?")) != -1) {
-        switch (c) {
-        case 'F':
-        case 'C':
-            scale = c;
-            break;
-        case 'c':
-            cpu = 1;
-            break;
-        case 'f':
-            fan = 1;
-            break;
-        case 'g':
-            gpu = 1;
-            break;
-        case 'h':
-        case '?':
-            printf("usage: osx-cpu-temp <options>\n");
-            printf("Options:\n");
-            printf("  -F  Display temperatures in degrees Fahrenheit.\n");
-            printf("  -C  Display temperatures in degrees Celsius (Default).\n");
-            printf("  -c  Display CPU temperature (Default).\n");
-            printf("  -g  Display GPU temperature.\n");
-            printf("  -f  Display fan speeds.\n");
-            printf("  -h  Display this help.\n");
-            printf("\nIf more than one of -c, -f, or -g are specified, titles will be added\n");
-            return -1;
-        }
+    double temperature = SMCGetTemperature(SMC_KEY_AMBIENT_TEMP);
+    if (scale == 'F') {
+        temperature = convertToFahrenheit(temperature);
     }
 
-    if (!fan && !gpu) {
-        cpu = 1;
+    char* title = "";
+    if (show_title) {
+        title = "Ambient: ";
     }
-
-    int show_title = fan + gpu + cpu > 1;
-
-    SMCOpen();
-
-    if (cpu) {
-        readAndPrintCpuTemp(show_title, scale);
-    }
-    if (gpu) {
-        readAndPrintGpuTemp(show_title, scale);
-    }
-    if (fan) {
-        readAndPrintFanRPMs();
-    }
-
-    SMCClose();
-    return 0;
+    printf("%s%0.1f °%c\n", title, temperature, scale);
 }
