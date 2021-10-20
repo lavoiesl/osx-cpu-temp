@@ -40,6 +40,7 @@ clib install lavoiesl/osx-cpu-temp
  * `-C` Output temperature in Celsius (default).
  * `-F` Output temperature in Fahrenheit.
  * `-f` Output fan speed.
+ * `-a` Output ambient temperature.
 
 ## Maintainer 
 
