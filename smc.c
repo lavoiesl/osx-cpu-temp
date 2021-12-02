@@ -1,6 +1,13 @@
 /*
- * Apple System Management Control (SMC) Tool 
- * Copyright (C) 2006 devnull 
+ * Modified by Sriram Swaminarayan to match
+ * output of 'powermetrics' on OSX Big Sur
+ * sriram@pobox.com
+ * December 02, 2021, or true palindrome day
+ */
+
+/*
+ * Apple System Management Control (SMC) Tool
+ * Copyright (C) 2006 devnull
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,12 +25,59 @@
  */
 
 #include <IOKit/IOKitLib.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "smc.h"
 
 static io_connect_t conn;
+
+double valToDouble(SMCVal_t val)
+{
+    double ret;
+    if (val.dataSize > 0) {
+        if (!strcmp("int", val.dataType)) {
+            ret = (double)*(int*)val.bytes;
+        } else if (!strcmp("ui32", val.dataType)) {
+            ret = (double)*(uint32_t*)val.bytes;
+        } else if (!strcmp("ui16", val.dataType)) {
+            ret = (double)*(uint16_t*)val.bytes;
+        } else if (!strcmp("ui8 ", val.dataType)) {
+            ret = (double)*(uint8_t*)val.bytes;
+        } else if (!strcmp("sp78", val.dataType)) {
+            // Discarding the exponent bits, not sure if that's OK
+            int a = val.bytes[0];
+            uint b = *(uint8_t*)(val.bytes + 1);
+            int i16 = (((int)a) << 6) + (b >> 2);
+            ret = (double)i16;
+        } else if (!strcmp("fpe2", val.dataType)) {
+            // No sign bit
+            int itmp = ((int)val.bytes[0]) * 256 + (unsigned char)(val.bytes[1] >> 2);
+            ret = (double)itmp;
+        } else if (!strcmp("flt ", val.dataType)) {
+            ret = (double)*(float*)val.bytes;
+        } else if (!strcmp("dbl ", val.dataType)) {
+            ret = (double)*(double*)val.bytes;
+        } else {
+            printf("__________________unknown SMCVal code=%s %d %d\n", val.dataType, val.bytes[0], val.bytes[1]);
+            ret = NAN;
+        }
+    } else {
+        ret = 0.0;
+    }
+    return ret;
+}
+
+int valToInt(SMCVal_t val)
+{
+    return (int)(valToDouble(val));
+}
+
+float valToFloat(SMCVal_t val)
+{
+    return (float)(valToDouble(val));
+}
 
 UInt32 _strtoul(char* str, int size, int base)
 {
@@ -145,20 +199,13 @@ double SMCGetTemperature(char* key)
 
     result = SMCReadKey(key, &val);
     if (result == kIOReturnSuccess) {
-        // read succeeded - check returned value
-        if (val.dataSize > 0) {
-            if (strcmp(val.dataType, DATATYPE_SP78) == 0) {
-                // convert sp78 value to temperature
-                int intValue = val.bytes[0] * 256 + (unsigned char)val.bytes[1];
-                return intValue / 256.0;
-            }
-        }
+        return valToDouble(val) / 64.;
     }
     // read failed
     return 0.0;
 }
 
-double SMCGetFanSpeed(char* key)
+float SMCGetFanSpeed(char* key)
 {
     SMCVal_t val;
     kern_return_t result;
@@ -166,13 +213,7 @@ double SMCGetFanSpeed(char* key)
     result = SMCReadKey(key, &val);
     if (result == kIOReturnSuccess) {
         // read succeeded - check returned value
-        if (val.dataSize > 0) {
-            if (strcmp(val.dataType, DATATYPE_FPE2) == 0) {
-                // convert fpe2 value to rpm
-                int intValue = (unsigned char)val.bytes[0] * 256 + (unsigned char)val.bytes[1];
-                return intValue / 4.0;
-            }
-        }
+        return valToFloat(val);
     }
     // read failed
     return 0.0;
@@ -220,13 +261,7 @@ float SMCGetFanRPM(char* key)
 
     result = SMCReadKey(key, &val);
     if (result == kIOReturnSuccess) {
-        // read succeeded - check returned value
-        if (val.dataSize > 0) {
-            if (strcmp(val.dataType, DATATYPE_FPE2) == 0) {
-                // convert fpe2 value to RPM
-                return ntohs(*(UInt16*)val.bytes) / 4.0;
-            }
-        }
+        return valToFloat(val);
     }
     // read failed
     return -1.f;
@@ -243,19 +278,19 @@ void readAndPrintFanRPMs(void)
     result = SMCReadKey("FNum", &val);
 
     if (result == kIOReturnSuccess) {
-        totalFans = _strtoul((char*)val.bytes, val.dataSize, 10);
-
+        totalFans = valToInt(val);
         printf("Num fans: %d\n", totalFans);
         for (i = 0; i < totalFans; i++) {
             sprintf(key, "F%dID", i);
             result = SMCReadKey(key, &val);
             if (result != kIOReturnSuccess) {
+                printf("F%d: not found\n", i);
                 continue;
             }
             char* name = val.bytes + 4;
 
             sprintf(key, "F%dAc", i);
-            float actual_speed = SMCGetFanRPM(key);
+            float actual_speed = SMCGetFanSpeed(key); //SS
             if (actual_speed < 0.f) {
                 continue;
             }
@@ -279,19 +314,20 @@ void readAndPrintFanRPMs(void)
             float pct = rpm / (maximum_speed - minimum_speed);
 
             pct *= 100.f;
-            printf("Fan %d - %s at %.0f RPM (%.0f%%)\n", i, name, rpm, pct);
+            printf("Fan %d - %s at %.0f RPM (%.0f%%)\n", i, name, actual_speed, pct);
 
-            //sprintf(key, "F%dSf", i);
-            //SMCReadKey(key, &val);
-            //printf("    Safe speed   : %.0f\n", strtof(val.bytes, val.dataSize, 2));
-            //sprintf(key, "F%dTg", i);
-            //SMCReadKey(key, &val);
-            //printf("    Target speed : %.0f\n", strtof(val.bytes, val.dataSize, 2));
-            //SMCReadKey("FS! ", &val);
-            //if ((_strtoul((char *)val.bytes, 2, 16) & (1 << i)) == 0)
-            //    printf("    Mode         : auto\n");
-            //else
-            //    printf("    Mode         : forced\n");
+            sprintf(key, "F%dSf", i);
+            SMCReadKey(key, &val);
+            printf("    Safe speed   : %.0f\n", valToFloat(val));
+            sprintf(key, "F%dTg", i);
+            SMCReadKey(key, &val);
+            printf("    Target speed : %.0f\n", valToFloat(val));
+            SMCReadKey("FS! ", &val);
+            int mode = valToInt(val);
+            if ((mode & (1 << i)) == 0)
+                printf("    Mode         : auto\n");
+            else
+                printf("    Mode         : forced\n");
         }
     }
 }
