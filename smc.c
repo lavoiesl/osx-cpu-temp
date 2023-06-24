@@ -20,7 +20,9 @@
 #include <IOKit/IOKitLib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
+#include "trim.c"
 #include "smc.h"
 
 static io_connect_t conn;
@@ -56,7 +58,7 @@ kern_return_t SMCOpen(void)
     io_object_t device;
 
     CFMutableDictionaryRef matchingDictionary = IOServiceMatching("AppleSMC");
-    result = IOServiceGetMatchingServices(kIOMasterPortDefault, matchingDictionary, &iterator);
+    result = IOServiceGetMatchingServices(kIOMainPortDefault, matchingDictionary, &iterator);
     if (result != kIOReturnSuccess) {
         printf("Error: IOServiceGetMatchingServices() = %08x\n", result);
         return 1;
@@ -184,7 +186,7 @@ double convertToFahrenheit(double celsius)
 }
 
 // Requires SMCOpen()
-void readAndPrintCpuTemp(int show_title, char scale)
+void readAndPrintCpuTemp(bool show_title, char scale)
 {
     double temperature = SMCGetTemperature(SMC_KEY_CPU_TEMP);
     if (scale == 'F') {
@@ -199,17 +201,14 @@ void readAndPrintCpuTemp(int show_title, char scale)
 }
 
 // Requires SMCOpen()
-void readAndPrintGpuTemp(int show_title, char scale)
+void readAndPrintGpuTemp(char scale)
 {
     double temperature = SMCGetTemperature(SMC_KEY_GPU_TEMP);
     if (scale == 'F') {
         temperature = convertToFahrenheit(temperature);
     }
 
-    char* title = "";
-    if (show_title) {
-        title = "GPU: ";
-    }
+    char* title = "GPU: ";
     printf("%s%0.1f °%c\n", title, temperature, scale);
 }
 
@@ -220,7 +219,6 @@ float SMCGetFanRPM(char* key)
 
     result = SMCReadKey(key, &val);
     if (result == kIOReturnSuccess) {
-        // read succeeded - check returned value
         if (val.dataSize > 0) {
             if (strcmp(val.dataType, DATATYPE_FPE2) == 0) {
                 // convert fpe2 value to RPM
@@ -245,7 +243,7 @@ void readAndPrintFanRPMs(void)
     if (result == kIOReturnSuccess) {
         totalFans = _strtoul((char*)val.bytes, val.dataSize, 10);
 
-        printf("Num fans: %d\n", totalFans);
+        printf("Number of fans: %d\n", totalFans);
         for (i = 0; i < totalFans; i++) {
             sprintf(key, "F%dID", i);
             result = SMCReadKey(key, &val);
@@ -272,26 +270,17 @@ void readAndPrintFanRPMs(void)
                 continue;
             }
 
-            float rpm = actual_speed - minimum_speed;
+            float rpm = actual_speed;
             if (rpm < 0.f) {
                 rpm = 0.f;
             }
-            float pct = rpm / (maximum_speed - minimum_speed);
+            float pct = actual_speed / maximum_speed;
 
             pct *= 100.f;
-            printf("Fan %d - %s at %.0f RPM (%.0f%%)\n", i, name, rpm, pct);
+            printf("Fan %d - %s at %.0f RPM (%.0f%%)\n", i, trim(name), rpm, pct);
+            printf("Minimum speed: %.0f\n", minimum_speed);
+            printf("Maximum speed: %.0f\n", maximum_speed);
 
-            //sprintf(key, "F%dSf", i);
-            //SMCReadKey(key, &val);
-            //printf("    Safe speed   : %.0f\n", strtof(val.bytes, val.dataSize, 2));
-            //sprintf(key, "F%dTg", i);
-            //SMCReadKey(key, &val);
-            //printf("    Target speed : %.0f\n", strtof(val.bytes, val.dataSize, 2));
-            //SMCReadKey("FS! ", &val);
-            //if ((_strtoul((char *)val.bytes, 2, 16) & (1 << i)) == 0)
-            //    printf("    Mode         : auto\n");
-            //else
-            //    printf("    Mode         : forced\n");
         }
     }
 }
@@ -334,22 +323,16 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (!fan && !gpu) {
-        cpu = 1;
-    }
-
-    int show_title = fan + gpu + cpu > 1;
+    bool show_title = cpu == 1;
 
     SMCOpen();
 
-    if (cpu) {
-        readAndPrintCpuTemp(show_title, scale);
-    }
     if (gpu) {
-        readAndPrintGpuTemp(show_title, scale);
-    }
-    if (fan) {
+        readAndPrintGpuTemp(scale);
+    } else if (fan) {
         readAndPrintFanRPMs();
+    } else {
+        readAndPrintCpuTemp(show_title, scale);
     }
 
     SMCClose();
