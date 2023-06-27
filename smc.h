@@ -1,6 +1,6 @@
 /*
  * Apple System Management Control (SMC) Tool
- * Copyright (C) 2006 devnull 
+ * Copyright (C) 2006 devnull
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,6 +40,7 @@
 // key values
 #define SMC_KEY_CPU_TEMP "TC0P"
 #define SMC_KEY_GPU_TEMP "TG0P"
+#define SMC_KEY_AMBIENT_TEMP "TA0V"
 #define SMC_KEY_FAN0_RPM_CUR "F0Ac"
 
 typedef struct {
