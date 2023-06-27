@@ -17,9 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef __SMC_H__
-#define __SMC_H__
-#endif
+#ifndef SMC_H
+#define SMC_H
 
 #define VERSION "0.01"
 
@@ -92,3 +91,5 @@ typedef struct {
 double SMCGetTemperature(char* key);
 kern_return_t SMCSetFanRpm(char* key, int rpm);
 int SMCGetFanRpm(char* key);
+
+#endif
