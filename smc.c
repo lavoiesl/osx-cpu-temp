@@ -1,6 +1,6 @@
 /*
- * Apple System Management Control (SMC) Tool 
- * Copyright (C) 2006 devnull 
+ * Apple System Management Control (SMC) Tool
+ * Copyright (C) 2006 devnull
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,9 +20,7 @@
 #include <IOKit/IOKitLib.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 
-#include "trim.c"
 #include "smc.h"
 
 static io_connect_t conn;
@@ -140,6 +138,7 @@ kern_return_t SMCReadKey(UInt32Char_t key, SMCVal_t* val)
     return kIOReturnSuccess;
 }
 
+// Requires SMCOpen()
 double SMCGetTemperature(char* key)
 {
     SMCVal_t val;
@@ -160,6 +159,7 @@ double SMCGetTemperature(char* key)
     return 0.0;
 }
 
+// Requires SMCOpen()
 double SMCGetFanSpeed(char* key)
 {
     SMCVal_t val;
@@ -185,31 +185,28 @@ double convertToFahrenheit(double celsius)
     return (celsius * (9.0 / 5.0)) + 32.0;
 }
 
-// Requires SMCOpen()
-void readAndPrintCpuTemp(bool show_title, char scale)
+double readTemperature(char* key, char scale)
 {
-    double temperature = SMCGetTemperature(SMC_KEY_CPU_TEMP);
+    double temperature = SMCGetTemperature(key);
     if (scale == 'F') {
         temperature = convertToFahrenheit(temperature);
     }
-
-    char* title = "";
-    if (show_title) {
-        title = "CPU: ";
-    }
-    printf("%s%0.1f °%c\n", title, temperature, scale);
+    return temperature;
 }
 
-// Requires SMCOpen()
-void readAndPrintGpuTemp(char scale)
+void readAndPrintTemperature(char* title, bool show_title, char* key, char scale, bool show_scale)
 {
-    double temperature = SMCGetTemperature(SMC_KEY_GPU_TEMP);
-    if (scale == 'F') {
-        temperature = convertToFahrenheit(temperature);
+    if (!show_title) {
+        title = "";
     }
 
-    char* title = "GPU: ";
-    printf("%s%0.1f °%c\n", title, temperature, scale);
+    double temperature = readTemperature(key, scale);
+
+    if (show_scale) {
+        printf("%s%0.1f °%c\n", title, temperature, scale);
+    } else {
+        printf("%s%0.1f\n", title, temperature);
+    }
 }
 
 float SMCGetFanRPM(char* key)
@@ -219,6 +216,7 @@ float SMCGetFanRPM(char* key)
 
     result = SMCReadKey(key, &val);
     if (result == kIOReturnSuccess) {
+        // read succeeded - check returned value
         if (val.dataSize > 0) {
             if (strcmp(val.dataType, DATATYPE_FPE2) == 0) {
                 // convert fpe2 value to RPM
@@ -243,7 +241,7 @@ void readAndPrintFanRPMs(void)
     if (result == kIOReturnSuccess) {
         totalFans = _strtoul((char*)val.bytes, val.dataSize, 10);
 
-        printf("Number of fans: %d\n", totalFans);
+        printf("Num fans: %d\n", totalFans);
         for (i = 0; i < totalFans; i++) {
             sprintf(key, "F%dID", i);
             result = SMCReadKey(key, &val);
@@ -270,17 +268,26 @@ void readAndPrintFanRPMs(void)
                 continue;
             }
 
-            float rpm = actual_speed;
+            float rpm = actual_speed - minimum_speed;
             if (rpm < 0.f) {
                 rpm = 0.f;
             }
-            float pct = actual_speed / maximum_speed;
+            float pct = rpm / (maximum_speed - minimum_speed);
 
             pct *= 100.f;
-            printf("Fan %d - %s at %.0f RPM (%.0f%%)\n", i, trim(name), rpm, pct);
-            printf("Minimum speed: %.0f\n", minimum_speed);
-            printf("Maximum speed: %.0f\n", maximum_speed);
+            printf("Fan %d - %s at %.0f RPM (%.0f%%)\n", i, name, rpm, pct);
 
+            //sprintf(key, "F%dSf", i);
+            //SMCReadKey(key, &val);
+            //printf("    Safe speed   : %.0f\n", strtof(val.bytes, val.dataSize, 2));
+            //sprintf(key, "F%dTg", i);
+            //SMCReadKey(key, &val);
+            //printf("    Target speed : %.0f\n", strtof(val.bytes, val.dataSize, 2));
+            //SMCReadKey("FS! ", &val);
+            //if ((_strtoul((char *)val.bytes, 2, 16) & (1 << i)) == 0)
+            //    printf("    Mode         : auto\n");
+            //else
+            //    printf("    Mode         : forced\n");
         }
     }
 }
@@ -288,25 +295,33 @@ void readAndPrintFanRPMs(void)
 int main(int argc, char* argv[])
 {
     char scale = 'C';
-    int cpu = 0;
-    int fan = 0;
-    int gpu = 0;
+    bool show_scale = true;
+    bool cpu = false;
+    bool fan = false;
+    bool gpu = false;
+    bool amb = false;
 
     int c;
-    while ((c = getopt(argc, argv, "CFcfgh?")) != -1) {
+    while ((c = getopt(argc, argv, "CFTcfgah?")) != -1) {
         switch (c) {
         case 'F':
         case 'C':
             scale = c;
             break;
+        case 'T':
+            show_scale = false;
+            break;
         case 'c':
-            cpu = 1;
+            cpu = true;
             break;
         case 'f':
-            fan = 1;
+            fan = true;
             break;
         case 'g':
-            gpu = 1;
+            gpu = true;
+            break;
+        case 'a':
+            amb = true;
             break;
         case 'h':
         case '?':
@@ -314,8 +329,10 @@ int main(int argc, char* argv[])
             printf("Options:\n");
             printf("  -F  Display temperatures in degrees Fahrenheit.\n");
             printf("  -C  Display temperatures in degrees Celsius (Default).\n");
+            printf("  -T  Do not display the units for temperatures.\n");
             printf("  -c  Display CPU temperature (Default).\n");
             printf("  -g  Display GPU temperature.\n");
+            printf("  -a  Display ambient temperature.\n");
             printf("  -f  Display fan speeds.\n");
             printf("  -h  Display this help.\n");
             printf("\nIf more than one of -c, -f, or -g are specified, titles will be added\n");
@@ -323,16 +340,25 @@ int main(int argc, char* argv[])
         }
     }
 
-    bool show_title = cpu == 1;
+    if (!fan && !gpu && !amb) {
+        cpu = true;
+    }
+
+    bool show_title = fan + gpu + cpu + amb > 1;
 
     SMCOpen();
 
+    if (cpu) {
+        readAndPrintTemperature("CPU: ", show_title, SMC_KEY_CPU_TEMP, scale, show_scale);
+    }
     if (gpu) {
-        readAndPrintGpuTemp(scale);
-    } else if (fan) {
+        readAndPrintTemperature("GPU: ", show_title, SMC_KEY_GPU_TEMP, scale, show_scale);
+    }
+    if (amb) {
+        readAndPrintTemperature("Ambient: ", show_title, SMC_KEY_AMBIENT_TEMP, scale, show_scale);
+    }
+    if (fan) {
         readAndPrintFanRPMs();
-    } else {
-        readAndPrintCpuTemp(show_title, scale);
     }
 
     SMCClose();

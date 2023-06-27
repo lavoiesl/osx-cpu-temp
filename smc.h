@@ -1,6 +1,6 @@
 /*
  * Apple System Management Control (SMC) Tool
- * Copyright (C) 2006 devnull 
+ * Copyright (C) 2006 devnull
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,9 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef __SMC_H__
-#define __SMC_H__
-#endif
+#ifndef SMC_H
+#define SMC_H
 
 #define VERSION "0.01"
 
@@ -41,6 +40,7 @@
 // key values
 #define SMC_KEY_CPU_TEMP "TC0P"
 #define SMC_KEY_GPU_TEMP "TG0P"
+#define SMC_KEY_AMBIENT_TEMP "TA0V"
 #define SMC_KEY_FAN0_RPM_CUR "F0Ac"
 
 typedef struct {
@@ -92,3 +92,5 @@ typedef struct {
 double SMCGetTemperature(char* key);
 kern_return_t SMCSetFanRpm(char* key, int rpm);
 int SMCGetFanRpm(char* key);
+
+#endif
