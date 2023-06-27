@@ -194,28 +194,19 @@ double readTemperature(char* key, char scale)
     return temperature;
 }
 
-void readAndPrintTemperature(char* title, char* key, char scale)
+void readAndPrintTemperature(char* title, bool show_title, char* key, char scale, bool show_scale)
 {
+    if (!show_title) {
+        title = "";
+    }
+
     double temperature = readTemperature(key, scale);
-    printf("%s%0.1f °%c\n", title, temperature, scale);
-}
 
-void readAndPrintCpuTemp(bool show_title, char scale)
-{
-    char* title = "";
-    if (show_title) {
-        title = "CPU: ";
+    if (show_scale) {
+        printf("%s%0.1f °%c\n", title, temperature, scale);
+    } else {
+        printf("%s%0.1f\n", title, temperature);
     }
-    readAndPrintTemperature(title, SMC_KEY_CPU_TEMP, scale);
-}
-
-void readAndPrintGpuTemp(bool show_title, char scale)
-{
-    char* title = "";
-    if (show_title) {
-        title = "GPU: ";
-    }
-    readAndPrintTemperature(title, SMC_KEY_GPU_TEMP, scale);
 }
 
 float SMCGetFanRPM(char* key)
@@ -304,16 +295,20 @@ void readAndPrintFanRPMs(void)
 int main(int argc, char* argv[])
 {
     char scale = 'C';
+    bool show_scale = true;
     bool cpu = false;
     bool fan = false;
     bool gpu = false;
 
     int c;
-    while ((c = getopt(argc, argv, "CFcfgh?")) != -1) {
+    while ((c = getopt(argc, argv, "CFTcfgh?")) != -1) {
         switch (c) {
         case 'F':
         case 'C':
             scale = c;
+            break;
+        case 'T':
+            show_scale = false;
             break;
         case 'c':
             cpu = true;
@@ -330,6 +325,7 @@ int main(int argc, char* argv[])
             printf("Options:\n");
             printf("  -F  Display temperatures in degrees Fahrenheit.\n");
             printf("  -C  Display temperatures in degrees Celsius (Default).\n");
+            printf("  -T  Do not display the units for temperatures.\n");
             printf("  -c  Display CPU temperature (Default).\n");
             printf("  -g  Display GPU temperature.\n");
             printf("  -f  Display fan speeds.\n");
@@ -348,10 +344,10 @@ int main(int argc, char* argv[])
     SMCOpen();
 
     if (cpu) {
-        readAndPrintCpuTemp(show_title, scale);
+        readAndPrintTemperature("CPU: ", show_title, SMC_KEY_CPU_TEMP, scale, show_scale);
     }
     if (gpu) {
-        readAndPrintGpuTemp(show_title, scale);
+        readAndPrintTemperature("GPU: ", show_title, SMC_KEY_GPU_TEMP, scale, show_scale);
     }
     if (fan) {
         readAndPrintFanRPMs();
