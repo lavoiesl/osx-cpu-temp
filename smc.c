@@ -138,6 +138,7 @@ kern_return_t SMCReadKey(UInt32Char_t key, SMCVal_t* val)
     return kIOReturnSuccess;
 }
 
+// Requires SMCOpen()
 double SMCGetTemperature(char* key)
 {
     SMCVal_t val;
@@ -158,6 +159,7 @@ double SMCGetTemperature(char* key)
     return 0.0;
 }
 
+// Requires SMCOpen()
 double SMCGetFanSpeed(char* key)
 {
     SMCVal_t val;
@@ -183,34 +185,37 @@ double convertToFahrenheit(double celsius)
     return (celsius * (9.0 / 5.0)) + 32.0;
 }
 
-// Requires SMCOpen()
-void readAndPrintCpuTemp(int show_title, char scale)
+double readTemperature(char* key, char scale)
 {
-    double temperature = SMCGetTemperature(SMC_KEY_CPU_TEMP);
+    double temperature = SMCGetTemperature(key);
     if (scale == 'F') {
         temperature = convertToFahrenheit(temperature);
     }
+    return temperature;
+}
 
+void readAndPrintTemperature(char* title, char* key, char scale)
+{
+    double temperature = readTemperature(key, scale);
+    printf("%s%0.1f °%c\n", title, temperature, scale);
+}
+
+void readAndPrintCpuTemp(bool show_title, char scale)
+{
     char* title = "";
     if (show_title) {
         title = "CPU: ";
     }
-    printf("%s%0.1f °%c\n", title, temperature, scale);
+    readAndPrintTemperature(title, SMC_KEY_CPU_TEMP, scale);
 }
 
-// Requires SMCOpen()
-void readAndPrintGpuTemp(int show_title, char scale)
+void readAndPrintGpuTemp(bool show_title, char scale)
 {
-    double temperature = SMCGetTemperature(SMC_KEY_GPU_TEMP);
-    if (scale == 'F') {
-        temperature = convertToFahrenheit(temperature);
-    }
-
     char* title = "";
     if (show_title) {
         title = "GPU: ";
     }
-    printf("%s%0.1f °%c\n", title, temperature, scale);
+    readAndPrintTemperature(title, SMC_KEY_GPU_TEMP, scale);
 }
 
 float SMCGetFanRPM(char* key)
@@ -299,9 +304,9 @@ void readAndPrintFanRPMs(void)
 int main(int argc, char* argv[])
 {
     char scale = 'C';
-    int cpu = 0;
-    int fan = 0;
-    int gpu = 0;
+    bool cpu = false;
+    bool fan = false;
+    bool gpu = false;
 
     int c;
     while ((c = getopt(argc, argv, "CFcfgh?")) != -1) {
@@ -311,13 +316,13 @@ int main(int argc, char* argv[])
             scale = c;
             break;
         case 'c':
-            cpu = 1;
+            cpu = true;
             break;
         case 'f':
-            fan = 1;
+            fan = true;
             break;
         case 'g':
-            gpu = 1;
+            gpu = true;
             break;
         case 'h':
         case '?':
@@ -335,10 +340,10 @@ int main(int argc, char* argv[])
     }
 
     if (!fan && !gpu) {
-        cpu = 1;
+        cpu = true;
     }
 
-    int show_title = fan + gpu + cpu > 1;
+    bool show_title = fan + gpu + cpu > 1;
 
     SMCOpen();
 
