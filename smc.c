@@ -140,6 +140,7 @@ kern_return_t SMCReadKey(UInt32Char_t key, SMCVal_t* val)
 
 UInt32 SMCReadIndexCount(void)
 {
+    kern_return_t result;
     SMCVal_t val;
 
     SMCReadKey("#KEY", &val);
@@ -413,6 +414,8 @@ double SMCGetPower(char* key)
     return -1.f;
 }
 
+=======
+>>>>>>> ef86749 (resolve conflicts)
 double convertToFahrenheit(double celsius)
 {
     return (celsius * (9.0 / 5.0)) + 32.0;
@@ -420,7 +423,7 @@ double convertToFahrenheit(double celsius)
 
 double readTemperature(char* key, char scale)
 {
-    double temperature = SMCGetTemperature(key);
+    double temperature = SMCGetDouble(key);
     if (scale == 'F') {
         temperature = convertToFahrenheit(temperature);
     }
@@ -429,8 +432,9 @@ double readTemperature(char* key, char scale)
 
 void readAndPrintTemperature(char* title, bool show_title, char* key, char scale, bool show_scale)
 {
-    if (!show_title) {
-        title = "";
+    double temperature = SMCGetDouble(key);
+    if (scale == 'F') {
+        temperature = convertToFahrenheit(temperature);
     }
 
     double temperature = readTemperature(key, scale);
