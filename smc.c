@@ -414,8 +414,6 @@ double SMCGetPower(char* key)
     return -1.f;
 }
 
-=======
->>>>>>> ef86749 (resolve conflicts)
 double convertToFahrenheit(double celsius)
 {
     return (celsius * (9.0 / 5.0)) + 32.0;
@@ -646,9 +644,9 @@ int main(int argc, char* argv[])
             printf("  -g [key] Display GPU temperature [of given key].\n");
             printf("  -a       Display ambient temperature.\n");
             printf("  -f       Display fan speeds.\n");
-            printf("  -t key   Display temperature of given SMC key.\n");
-            printf("  -r key   Display raw value of given SMC key.\n");
-            printf("  -A       Display ALL SMC keys\n")
+            printf("  -A       Display all SMC keys")
+            printf("  -t key   Display temperature of given SMC key\n");
+            printf("  -r key   Display raw value of given SMC key\n");
             printf("  -h       Display this help.\n");
             printf("\nIf more than one of -c, -f, or -g are specified, titles will be added\n");
             return -1;
