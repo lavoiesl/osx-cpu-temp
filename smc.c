@@ -138,12 +138,8 @@ kern_return_t SMCReadKey(UInt32Char_t key, SMCVal_t* val)
     return kIOReturnSuccess;
 }
 
-<<<<<<< HEAD
-UInt32 SMCReadIndexCount(void)
-=======
 // Requires SMCOpen()
 double SMCGetTemperature(char* key)
->>>>>>> 180cff1 (Refactor readAndPrintTemperature)
 {
     kern_return_t result;
     SMCVal_t val;
@@ -155,7 +151,6 @@ double SMCGetTemperature(char* key)
     return _strtoul((char*)val.bytes, val.dataSize, 10);
 }
 
-<<<<<<< HEAD
 double SMCNormalizeFloat(SMCVal_t val)
 {
     if (strcmp(val.dataType, DATATYPE_SP78) == 0) {
@@ -259,10 +254,6 @@ kern_return_t SMCPrintAll(void)
 }
 
 double SMCGetDouble(char* key)
-=======
-// Requires SMCOpen()
-double SMCGetFanSpeed(char* key)
->>>>>>> 180cff1 (Refactor readAndPrintTemperature)
 {
     SMCVal_t val;
     kern_return_t result;
@@ -283,50 +274,34 @@ double convertToFahrenheit(double celsius)
     return (celsius * (9.0 / 5.0)) + 32.0;
 }
 
-<<<<<<< HEAD
-// Requires SMCOpen()
-void readAndPrintCpuTemp(char* key, int show_title, char scale)
-{
-    double temperature = SMCGetDouble(key);
-=======
 double readTemperature(char* key, char scale)
 {
     double temperature = SMCGetTemperature(key);
->>>>>>> 180cff1 (Refactor readAndPrintTemperature)
     if (scale == 'F') {
         temperature = convertToFahrenheit(temperature);
     }
     return temperature;
 }
 
-void readAndPrintTemperature(char* title, char* key, char scale)
+void readAndPrintTemperature(char* title, bool show_title, char* key, char scale, bool show_scale)
 {
-    double temperature = readTemperature(key, scale);
-    printf("%s%0.1f °%c\n", title, temperature, scale);
-}
-
-void readAndPrintCpuTemp(bool show_title, char scale)
-{
-    char* title = "";
-    if (show_title) {
-        title = "CPU: ";
+    if (!show_title) {
+        title = "";
     }
+
+    double temperature = readTemperature(key, scale);
+
+    if (show_scale) {
+        printf("%s%0.1f °%c\n", title, temperature, scale);
+    } else {
+        printf("%s%0.1f\n", title, temperature);
+    }
+<<<<<<< HEAD
     readAndPrintTemperature(title, SMC_KEY_CPU_TEMP, scale);
 }
 
-<<<<<<< HEAD
-// Requires SMCOpen()
-void readAndPrintGpuTemp(char* key, int show_title, char scale)
-{
-    double temperature = SMCGetDouble(key);
-    if (scale == 'F') {
-        temperature = convertToFahrenheit(temperature);
-    }
-
-=======
 void readAndPrintGpuTemp(bool show_title, char scale)
 {
->>>>>>> 180cff1 (Refactor readAndPrintTemperature)
     char* title = "";
     if (show_title) {
         title = "GPU: ";
@@ -452,6 +427,7 @@ void readAndPrintAll(void)
 int main(int argc, char* argv[])
 {
     char scale = 'C';
+    bool show_scale = true;
     int cpu = 0;
     int fan = 0;
     int gpu = 0;
@@ -461,11 +437,14 @@ int main(int argc, char* argv[])
     char* key;
 
     int c;
-    while ((c = getopt(argc, argv, ":CFc:g:ft:r:ah?")) != -1) {
+    while ((c = getopt(argc, argv, ":CFc:g:ft:r:aAh?")) != -1) {
         switch (c) {
         case 'F':
         case 'C':
             scale = c;
+            break;
+        case 'T':
+            show_scale = false;
             break;
         case 'c':
             // optionally allow to pass the SMC Key (**TC0P**, TC0D, TCXC, ...)
@@ -512,6 +491,7 @@ int main(int argc, char* argv[])
             printf("Options:\n");
             printf("  -F       Display temperatures in degrees Fahrenheit.\n");
             printf("  -C       Display temperatures in degrees Celsius (Default).\n");
+            printf("  -T       Do not display the units for temperatures.\n");
             printf("  -c [key] Display CPU temperature [of given key] (Default).\n");
             printf("  -g [key] Display GPU temperature [of given key].\n");
             printf("  -a       Display ambient temperature.\n");
@@ -534,10 +514,10 @@ int main(int argc, char* argv[])
     SMCOpen();
 
     if (cpu) {
-        readAndPrintCpuTemp(key, show_title, scale);
+        readAndPrintTemperature("CPU: ", show_title, SMC_KEY_CPU_TEMP, scale, show_scale);
     }
     if (gpu) {
-        readAndPrintGpuTemp(key, show_title, scale);
+        readAndPrintTemperature("GPU: ", show_title, SMC_KEY_GPU_TEMP, scale, show_scale);
     }
     if (fan) {
         readAndPrintFanRPMs();
