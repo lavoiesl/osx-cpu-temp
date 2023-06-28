@@ -32,10 +32,16 @@
 #define SMC_CMD_READ_VERS 12
 
 #define DATATYPE_FPE2 "fpe2"
+#define DATATYPE_FP88 "fp88"
 #define DATATYPE_UINT8 "ui8 "
 #define DATATYPE_UINT16 "ui16"
 #define DATATYPE_UINT32 "ui32"
 #define DATATYPE_SP78 "sp78"
+#define DATATYPE_SP5A "sp5a"
+#define DATATYPE_SI16 "si16"
+#define DATATYPE_HEX "hex_"
+#define DATATYPE_FLAG "flag"
+#define DATATYPE_CH8 "ch8*"
 
 // key values
 #define SMC_KEY_CPU_TEMP "TC0P"
