@@ -327,6 +327,10 @@ double readTemperature(char* key, char scale)
 
 void readAndPrintTemperature(char* title, bool show_title, char* key, char scale, bool show_scale)
 {
+    if (!show_title) {
+         title = "";
+    }
+
     double temperature = readTemperature(key, scale);
 
     if (show_scale) {
