@@ -2,7 +2,7 @@
 
 Outputs current CPU temperature for OSX.
 
-## Usage 
+## Usage
 
 ### Compiling
 
@@ -37,15 +37,15 @@ clib install lavoiesl/osx-cpu-temp
 
 ### Options
 
- * `-h` Print command line options.
- * `-C` Output temperature in Celsius (default).
- * `-F` Output temperature in Fahrenheit.
- * `-c [key]` Print CPU temperature, optionally providing the SMC key.
- * `-g [key]` Print GPU temperature, optionally providing the SMC key.
- * `-f` Output fan speed.
- * `-t key` Print temperature value of given SMC key.
- * `-r key` Print raw value of given SMC key.
- * `-a` Print ALL available SMC keys (without description!).
+* Output
+    * `-c` Display CPU temperature (Default).
+    * `-g` Display GPU temperature.
+    * `-a` Display ambient temperature.
+    * `-f` Display fan speeds.
+* Format
+    * `-C` Display temperatures in degrees Celsius (Default).
+    * `-F` Display temperatures in degrees Fahrenheit.
+    * `-T` Do not display the units for temperatures.
 
 ### Explore keys
 * see https://github.com/acidanthera/VirtualSMC/blob/master/Docs/SMCKeys.txt
@@ -57,16 +57,16 @@ osx-cpu-temp -r '#KEY' # number of keys
 osx-cpu-temp -r TC0P # CPU proximity sensor
 ```
 
-## Maintainer 
+## Maintainer
 
 Sébastien Lavoie <github@lavoie.sl>
 
-### Source 
+### Source
 
-Apple System Management Control (SMC) Tool 
+Apple System Management Control (SMC) Tool
 Copyright (C) 2006
 
-### Inspiration 
+### Inspiration
 
  * https://www.eidac.de/smcfancontrol/
  * https://github.com/hholtmann/smcFanControl/tree/master/smc-command

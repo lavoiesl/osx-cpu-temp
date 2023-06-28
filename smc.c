@@ -485,6 +485,9 @@ int main(int argc, char* argv[])
                 return -1;
             }
             break;
+        case 'a':
+            amb = true;
+            break;
         case 'h':
         case '?':
             printf("usage: osx-cpu-temp <options>\n");
@@ -509,7 +512,7 @@ int main(int argc, char* argv[])
         cpu = 1;
     }
 
-    bool show_title = fan + gpu + cpu > 1;
+    bool show_title = fan + gpu + cpu + amb > 1;
 
     SMCOpen();
 
@@ -518,6 +521,9 @@ int main(int argc, char* argv[])
     }
     if (gpu) {
         readAndPrintTemperature("GPU: ", show_title, SMC_KEY_GPU_TEMP, scale, show_scale);
+    }
+    if (amb) {
+        readAndPrintTemperature("Ambient: ", show_title, SMC_KEY_AMBIENT_TEMP, scale, show_scale);
     }
     if (fan) {
         readAndPrintFanRPMs();
