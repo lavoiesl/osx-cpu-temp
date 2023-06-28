@@ -140,7 +140,6 @@ kern_return_t SMCReadKey(UInt32Char_t key, SMCVal_t* val)
 
 UInt32 SMCReadIndexCount(void)
 {
-    kern_return_t result;
     SMCVal_t val;
 
     SMCReadKey("#KEY", &val);
@@ -264,44 +263,6 @@ double SMCGetTemperature(char* key)
     return -1.0;
 }
 
-kern_return_t SMCPrintAll(void)
-{
-    kern_return_t result;
-    SMCKeyData_t inputStructure;
-    SMCKeyData_t outputStructure;
-
-    int totalKeys, i;
-    UInt32Char_t key;
-    SMCVal_t val;
-
-    totalKeys = SMCReadIndexCount();
-    printf("Total keys = %d\n", totalKeys);
-
-    for (i = 0; i < totalKeys; i++) {
-        memset(&inputStructure, 0, sizeof(SMCKeyData_t));
-        memset(&outputStructure, 0, sizeof(SMCKeyData_t));
-        memset(&val, 0, sizeof(SMCVal_t));
-
-        inputStructure.data8 = SMC_CMD_READ_INDEX;
-        inputStructure.data32 = i;
-
-        result = SMCCall(KERNEL_INDEX_SMC, &inputStructure, &outputStructure);
-        if (result != kIOReturnSuccess)
-            continue;
-
-        _ultostr(key, outputStructure.key);
-
-        result = SMCReadKey(key, &val);
-        if (result != kIOReturnSuccess)
-            continue;
-
-        char* txt = SMCNormalizeText(val);
-        printf("key = %s type = %s value = %s\n", key, val.dataType, txt);
-    }
-
-    return kIOReturnSuccess;
-}
-
 double SMCGetDouble(char* key)
 {
     SMCVal_t val;
@@ -366,18 +327,16 @@ double readTemperature(char* key, char scale)
 
 void readAndPrintTemperature(char* title, bool show_title, char* key, char scale, bool show_scale)
 {
+    double temperature = readTemperature(key, scale);
     if (scale == 'F') {
         temperature = convertToFahrenheit(temperature);
     }
-
-    double temperature = readTemperature(key, scale);
 
     if (show_scale) {
         printf("%s%0.1f °%c\n", title, temperature, scale);
     } else {
         printf("%s%0.1f\n", title, temperature);
     }
-    readAndPrintTemperature(title, SMC_KEY_CPU_TEMP, scale);
 }
 
 // Requires SMCOpen()
@@ -492,6 +451,7 @@ int main(int argc, char* argv[])
     int cpu = 0;
     int fan = 0;
     int gpu = 0;
+    int amb = 0;
     int tmp = 0;
     int raw = 0;
     int all = 0;
@@ -560,7 +520,7 @@ int main(int argc, char* argv[])
             printf("  -g [key] Display GPU temperature [of given key].\n");
             printf("  -a       Display ambient temperature.\n");
             printf("  -f       Display fan speeds.\n");
-            printf("  -A       Display all SMC keys")
+            printf("  -A       Display all SMC keys");
             printf("  -t key   Display temperature of given SMC key\n");
             printf("  -r key   Display raw value of given SMC key\n");
             printf("  -h       Display this help.\n");
@@ -590,7 +550,7 @@ int main(int argc, char* argv[])
         readAndPrintFanRPMs();
     }
     if (tmp) {
-        readAndPrintTemp(key, scale);
+        readAndPrintTemperature(key, show_title, key, scale, show_scale);
     }
     if (raw) {
         readAndPrintRawValue(key);
