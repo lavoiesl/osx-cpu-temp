@@ -138,17 +138,129 @@ kern_return_t SMCReadKey(UInt32Char_t key, SMCVal_t* val)
     return kIOReturnSuccess;
 }
 
+UInt32 SMCReadIndexCount(void)
+{
+    SMCVal_t val;
+
+    SMCReadKey("#KEY", &val);
+    return _strtoul((char *)val.bytes, val.dataSize, 10);
+}
+
+double SMCNormalizeFloat(SMCVal_t val)
+{
+    if (strcmp(val.dataType, DATATYPE_SP78) == 0) {
+        return ((SInt16)ntohs(*(UInt16*)val.bytes)) / 256.0;
+    }
+    if (strcmp(val.dataType, DATATYPE_SP5A) == 0) {
+        return ((SInt16)ntohs(*(UInt16*)val.bytes)) / 1024.0;
+    }
+    if (strcmp(val.dataType, DATATYPE_FPE2) == 0) {
+        return ntohs(*(UInt16*)val.bytes) / 4.0;
+    }
+    if (strcmp(val.dataType, DATATYPE_FP88) == 0) {
+        return ntohs(*(UInt16*)val.bytes) / 256.0;
+    }
+    return -1.f;
+}
+
+int SMCNormalizeInt(SMCVal_t val)
+{
+    if (strcmp(val.dataType, DATATYPE_UINT8) == 0 || strcmp(val.dataType, DATATYPE_UINT16) == 0 || strcmp(val.dataType, DATATYPE_UINT32) == 0) {
+        return (int) _strtoul((char *)val.bytes, val.dataSize, 10);
+    }
+    if (strcmp(val.dataType, DATATYPE_SI16) == 0) {
+        return ntohs(*(SInt16*)val.bytes);
+    }
+
+    if (strcmp(val.dataType, DATATYPE_HEX) == 0 || strcmp(val.dataType, DATATYPE_FLAG) == 0) {
+        printf("Hex value = 0x");
+        int i;
+        for (i = 0; i < val.dataSize; i++)
+          printf("%02x ", (unsigned char) val.bytes[i]);
+        printf("\n");
+        return (int) _strtoul((char *)val.bytes, val.dataSize, 10);
+    }
+    return -1;
+}
+
+char* SMCNormalizeText(SMCVal_t val)
+{
+    char result[val.dataSize + 2];
+    if (strcmp(val.dataType, DATATYPE_CH8) == 0) {
+        int i;
+        for (i = 0; i < val.dataSize; i++) {
+            result[i] = (unsigned char)val.bytes[i];
+        }
+        result[i+1] = 0;
+        return strdup(result);
+    }
+
+    // convert anything else to text
+    double f = SMCNormalizeFloat(val);
+    if (f != -1.0) {
+        snprintf(result, 10, "%0.1f", f);
+        return strdup(result);
+    }
+    int i = SMCNormalizeInt(val);
+    if (i != -1) {
+        snprintf(result, 10, "%d", i);
+        return strdup(result);
+    }
+
+    return strdup(result);
+}
+
+kern_return_t SMCPrintAll(void)
+{
+    kern_return_t result;
+    SMCKeyData_t  inputStructure;
+    SMCKeyData_t  outputStructure;
+
+    int           totalKeys, i;
+    UInt32Char_t  key;
+    SMCVal_t      val;
+
+    totalKeys = SMCReadIndexCount();
+    printf("Total keys = %d\n", totalKeys);
+
+    for (i = 0; i < totalKeys; i++)
+    {
+        memset(&inputStructure, 0, sizeof(SMCKeyData_t));
+        memset(&outputStructure, 0, sizeof(SMCKeyData_t));
+        memset(&val, 0, sizeof(SMCVal_t));
+
+        inputStructure.data8 = SMC_CMD_READ_INDEX;
+        inputStructure.data32 = i;
+
+        result = SMCCall(KERNEL_INDEX_SMC, &inputStructure, &outputStructure);
+        if (result != kIOReturnSuccess)
+            continue;
+
+        _ultostr(key, outputStructure.key);
+
+		SMCReadKey(key, &val);
+		char* txt = SMCNormalizeText(val);
+		printf("key = %s type = %s value = %s\n", key, val.dataType, txt);
+    }
+
+    return kIOReturnSuccess;
+}
+
 // Requires SMCOpen()
 double SMCGetTemperature(char* key)
 {
     kern_return_t result;
     SMCVal_t val;
 
-    result = SMCReadKey("#KEY", &val);
-    if (result != kIOReturnSuccess) {
-        return 0;
+    result = SMCReadKey(key, &val);
+    if (result == kIOReturnSuccess) {
+        // read succeeded - check returned value
+        if (val.dataSize > 0) {
+            return SMCNormalizeFloat(val);
+        }
     }
-    return _strtoul((char*)val.bytes, val.dataSize, 10);
+    // read failed
+    return -1.0;
 }
 
 double SMCNormalizeFloat(SMCVal_t val)
@@ -269,6 +381,38 @@ double SMCGetDouble(char* key)
     return -1.0;
 }
 
+float SMCGetFanRPM(char* key)
+{
+    SMCVal_t val;
+    kern_return_t result;
+
+    result = SMCReadKey(key, &val);
+    if (result == kIOReturnSuccess) {
+        // read succeeded - check returned value
+        if (val.dataSize > 0) {
+            return SMCNormalizeFloat(val);
+        }
+    }
+    // read failed
+    return -1.f;
+}
+
+double SMCGetPower(char* key)
+{
+    SMCVal_t val;
+    kern_return_t result;
+
+    result = SMCReadKey(key, &val);
+    if (result == kIOReturnSuccess) {
+        // read succeeded - check returned value
+        if (val.dataSize > 0) {
+            return SMCNormalizeFloat(val);
+        }
+    }
+    // read failed
+    return -1.f;
+}
+
 double convertToFahrenheit(double celsius)
 {
     return (celsius * (9.0 / 5.0)) + 32.0;
@@ -296,7 +440,6 @@ void readAndPrintTemperature(char* title, bool show_title, char* key, char scale
     } else {
         printf("%s%0.1f\n", title, temperature);
     }
-<<<<<<< HEAD
     readAndPrintTemperature(title, SMC_KEY_CPU_TEMP, scale);
 }
 
@@ -486,7 +629,7 @@ int main(int argc, char* argv[])
             }
             break;
         case 'a':
-            amb = true;
+            amb = 1;
             break;
         case 'h':
         case '?':
