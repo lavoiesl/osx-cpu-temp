@@ -328,9 +328,6 @@ double readTemperature(char* key, char scale)
 void readAndPrintTemperature(char* title, bool show_title, char* key, char scale, bool show_scale)
 {
     double temperature = readTemperature(key, scale);
-    if (scale == 'F') {
-        temperature = convertToFahrenheit(temperature);
-    }
 
     if (show_scale) {
         printf("%s%0.1f °%c\n", title, temperature, scale);
@@ -458,11 +455,12 @@ int main(int argc, char* argv[])
     char* key;
 
     int c;
-    while ((c = getopt(argc, argv, ":CFc:g:ft:r:aAh?")) != -1) {
+    while ((c = getopt(argc, argv, ":CFTc:g:afAt:r:h?")) != -1) {
         switch (c) {
         case 'F':
+            scale = 'F';
+            break;
         case 'C':
-            scale = c;
             break;
         case 'T':
             show_scale = false;
@@ -470,15 +468,32 @@ int main(int argc, char* argv[])
         case 'c':
             // optionally allow to pass the SMC Key (**TC0P**, TC0D, TCXC, ...)
             cpu = 1;
-            key = optarg;
+            if (optarg[0] == '-') {
+                key = SMC_KEY_CPU_TEMP;
+                optind -= 1;
+            } else {
+                key = optarg;
+            }
             break;
         case 'g':
             // optionally allow to pass the SMC Key (**TG0P**, TG0D, TCGC, ...)
             gpu = 1;
-            key = optarg;
+            if (optarg[0] == '-') {
+                key = SMC_KEY_GPU_TEMP;
+                optind -= 1;
+            } else {
+                key = optarg;
+            }
+            break;
+        case 'a':
+            amb = 1;
             break;
         case 'f':
             fan = true;
+            break;
+        // all option, see: https://github.com/hholtmann/smcFanControl/blob/875c68b0d36fbda40d2bf745fc43dcb40523360b/smc-command/smc.c#L485
+        case 'A':
+            all = 1;
             break;
         case 't':
             tmp = 1;
@@ -488,26 +503,21 @@ int main(int argc, char* argv[])
             raw = 1;
             key = optarg;
             break;
-        // all option, see: https://github.com/hholtmann/smcFanControl/blob/875c68b0d36fbda40d2bf745fc43dcb40523360b/smc-command/smc.c#L485
-        case 'A':
-            all = 1;
-            break;
         case ':':
             // optional arguments, set defaults
             switch (optopt) {
             case 'c':
+                cpu = 1;
                 key = SMC_KEY_CPU_TEMP;
                 break;
             case 'g':
+                gpu = 1;
                 key = SMC_KEY_GPU_TEMP;
                 break;
             default:
                 printf("Error: '-%c' requires an argument", optopt);
                 return -1;
             }
-            break;
-        case 'a':
-            amb = 1;
             break;
         case 'h':
         case '?':
@@ -529,7 +539,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (!fan && !gpu && !tmp && !raw & !all) {
+    if (!fan && !gpu && !amb && !tmp && !raw && !all) {
         cpu = 1;
     }
 
