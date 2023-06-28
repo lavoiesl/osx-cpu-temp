@@ -264,70 +264,6 @@ double SMCGetTemperature(char* key)
     return -1.0;
 }
 
-double SMCNormalizeFloat(SMCVal_t val)
-{
-    if (strcmp(val.dataType, DATATYPE_SP78) == 0) {
-        return ((SInt16)ntohs(*(UInt16*)val.bytes)) / 256.0;
-    }
-    if (strcmp(val.dataType, DATATYPE_SP5A) == 0) {
-        return ((SInt16)ntohs(*(UInt16*)val.bytes)) / 1024.0;
-    }
-    if (strcmp(val.dataType, DATATYPE_FPE2) == 0) {
-        return ntohs(*(UInt16*)val.bytes) / 4.0;
-    }
-    if (strcmp(val.dataType, DATATYPE_FP88) == 0) {
-        return ntohs(*(UInt16*)val.bytes) / 256.0;
-    }
-    return -1.f;
-}
-
-int SMCNormalizeInt(SMCVal_t val)
-{
-    if (strcmp(val.dataType, DATATYPE_UINT8) == 0 || strcmp(val.dataType, DATATYPE_UINT16) == 0 || strcmp(val.dataType, DATATYPE_UINT32) == 0) {
-        return (int)_strtoul((char*)val.bytes, val.dataSize, 10);
-    }
-    if (strcmp(val.dataType, DATATYPE_SI16) == 0) {
-        return ntohs(*(SInt16*)val.bytes);
-    }
-
-    if (strcmp(val.dataType, DATATYPE_HEX) == 0 || strcmp(val.dataType, DATATYPE_FLAG) == 0) {
-        printf("Hex value = 0x");
-        int i;
-        for (i = 0; i < val.dataSize; i++)
-            printf("%02x ", (unsigned char)val.bytes[i]);
-        printf("\n");
-        return (int)_strtoul((char*)val.bytes, val.dataSize, 10);
-    }
-    return -1;
-}
-
-char* SMCNormalizeText(SMCVal_t val)
-{
-    char result[val.dataSize + 2];
-    if (strcmp(val.dataType, DATATYPE_CH8) == 0) {
-        int i;
-        for (i = 0; i < val.dataSize; i++) {
-            result[i] = (unsigned char)val.bytes[i];
-        }
-        result[i + 1] = 0;
-        return strdup(result);
-    }
-
-    // convert anything else to text
-    double f = SMCNormalizeFloat(val);
-    if (f != -1.0) {
-        snprintf(result, 10, "%0.1f", f);
-        return strdup(result);
-    }
-    int i = SMCNormalizeInt(val);
-    if (i != -1) {
-        snprintf(result, 10, "%d", i);
-        return strdup(result);
-    }
-
-    return strdup(result);
-}
-
 kern_return_t SMCPrintAll(void)
 {
     kern_return_t result;
@@ -430,7 +366,6 @@ double readTemperature(char* key, char scale)
 
 void readAndPrintTemperature(char* title, bool show_title, char* key, char scale, bool show_scale)
 {
-    double temperature = SMCGetDouble(key);
     if (scale == 'F') {
         temperature = convertToFahrenheit(temperature);
     }
@@ -443,25 +378,6 @@ void readAndPrintTemperature(char* title, bool show_title, char* key, char scale
         printf("%s%0.1f\n", title, temperature);
     }
     readAndPrintTemperature(title, SMC_KEY_CPU_TEMP, scale);
-}
-
-void readAndPrintGpuTemp(bool show_title, char scale)
-{
-    char* title = "";
-    if (show_title) {
-        title = "GPU: ";
-    }
-    readAndPrintTemperature(title, SMC_KEY_GPU_TEMP, scale);
-}
-
-// Requires SMCOpen()
-void readAndPrintTemp(char* key, char scale)
-{
-    double temperature = SMCGetDouble(key);
-    if (scale == 'F') {
-        temperature = convertToFahrenheit(temperature);
-    }
-    printf("%s = %0.1f °%c\n", key, temperature, scale);
 }
 
 // Requires SMCOpen()
