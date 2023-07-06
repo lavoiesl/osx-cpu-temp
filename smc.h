@@ -38,7 +38,7 @@
 #define DATATYPE_SP78 "sp78"
 
 // key values
-#define SMC_KEY_CPU_TEMP "TC0P"
+#define SMC_KEY_CPU_TEMP "TC0F"
 #define SMC_KEY_GPU_TEMP "TG0P"
 #define SMC_KEY_AMBIENT_TEMP "TA0V"
 #define SMC_KEY_FAN0_RPM_CUR "F0Ac"
