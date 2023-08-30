@@ -25,6 +25,7 @@
 
 static io_connect_t conn;
 
+
 UInt32 _strtoul(char* str, int size, int base)
 {
     UInt32 total = 0;
@@ -54,6 +55,10 @@ kern_return_t SMCOpen(void)
     kern_return_t result;
     io_iterator_t iterator;
     io_object_t device;
+
+    #ifndef kIOMainPortDefault
+    #define kIOMainPortDefault kIOMasterPortDefault
+    #endif
 
     CFMutableDictionaryRef matchingDictionary = IOServiceMatching("AppleSMC");
     result = IOServiceGetMatchingServices(kIOMainPortDefault, matchingDictionary, &iterator);
