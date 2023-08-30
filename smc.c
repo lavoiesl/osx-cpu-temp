@@ -25,6 +25,7 @@
 
 static io_connect_t conn;
 
+
 UInt32 _strtoul(char* str, int size, int base)
 {
     UInt32 total = 0;
@@ -54,6 +55,10 @@ kern_return_t SMCOpen(void)
     kern_return_t result;
     io_iterator_t iterator;
     io_object_t device;
+
+    #ifndef kIOMainPortDefault
+    #define kIOMainPortDefault kIOMasterPortDefault
+    #endif
 
     CFMutableDictionaryRef matchingDictionary = IOServiceMatching("AppleSMC");
     result = IOServiceGetMatchingServices(kIOMainPortDefault, matchingDictionary, &iterator);
@@ -268,26 +273,14 @@ void readAndPrintFanRPMs(void)
                 continue;
             }
 
-            float rpm = actual_speed - minimum_speed;
+            float rpm = actual_speed;
             if (rpm < 0.f) {
                 rpm = 0.f;
             }
-            float pct = rpm / (maximum_speed - minimum_speed);
+            float pct = rpm / maximum_speed;
 
             pct *= 100.f;
             printf("Fan %d - %s at %.0f RPM (%.0f%%)\n", i, name, rpm, pct);
-
-            //sprintf(key, "F%dSf", i);
-            //SMCReadKey(key, &val);
-            //printf("    Safe speed   : %.0f\n", strtof(val.bytes, val.dataSize, 2));
-            //sprintf(key, "F%dTg", i);
-            //SMCReadKey(key, &val);
-            //printf("    Target speed : %.0f\n", strtof(val.bytes, val.dataSize, 2));
-            //SMCReadKey("FS! ", &val);
-            //if ((_strtoul((char *)val.bytes, 2, 16) & (1 << i)) == 0)
-            //    printf("    Mode         : auto\n");
-            //else
-            //    printf("    Mode         : forced\n");
         }
     }
 }
